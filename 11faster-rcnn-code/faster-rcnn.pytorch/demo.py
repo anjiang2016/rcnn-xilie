@@ -1,7 +1,8 @@
 # --------------------------------------------------------
-# Tensorflow Faster R-CNN
+# Pytorch Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Jiasen Lu, Jianwei Yang, based on code from Ross Girshick
+# Modify by ZMM, based on code from Ross Girshick
 # --------------------------------------------------------
 from __future__ import absolute_import
 from __future__ import division
@@ -37,12 +38,13 @@ from model.faster_rcnn.vgg16 import vgg16
 from model.faster_rcnn.resnet import resnet
 import pdb
 
+# 兼容python2,和 python3
 try:
     xrange          # Python 2
 except NameError:
     xrange = range  # Python 3
 
-
+# 输入参数处理
 def parse_args():
   """
   Parse input arguments
@@ -54,30 +56,42 @@ def parse_args():
   parser.add_argument('--cfg', dest='cfg_file',
                       help='optional config file',
                       default='cfgs/vgg16.yml', type=str)
+  # 网络类型
   parser.add_argument('--net', dest='net',
                       help='vgg16, res50, res101, res152',
                       default='res101', type=str)
+  # 设置keys
   parser.add_argument('--set', dest='set_cfgs',
                       help='set config keys', default=None,
                       nargs=argparse.REMAINDER)
+  # 模型参数保存的路径
   parser.add_argument('--load_dir', dest='load_dir',
                       help='directory to load models',
                       default="/srv/share/jyang375/models")
+                      
+  # 图片存储路径
   parser.add_argument('--image_dir', dest='image_dir',
                       help='directory to load images for demo',
                       default="images")
+
+  # 是否使用cuda
   parser.add_argument('--cuda', dest='cuda',
                       help='whether use CUDA',
                       action='store_true')
+ 
+  # 是否使用多GPU
   parser.add_argument('--mGPUs', dest='mGPUs',
                       help='whether use multiple GPUs',
                       action='store_true')
+  # 是否对不可知类预测bbox
   parser.add_argument('--cag', dest='class_agnostic',
                       help='whether perform class_agnostic bbox regression',
                       action='store_true')
+  # roipooling前并行计算，还是roi区域后并行计算？
   parser.add_argument('--parallel_type', dest='parallel_type',
                       help='which part of model to parallel, 0: all, 1: model before roi pooling',
                       default=0, type=int)
+  # 
   parser.add_argument('--checksession', dest='checksession',
                       help='checksession to load model',
                       default=1, type=int)
@@ -93,6 +107,7 @@ def parse_args():
   parser.add_argument('--vis', dest='vis',
                       help='visualization mode',
                       action='store_true')
+  # 摄像头路径
   parser.add_argument('--webcam_num', dest='webcam_num',
                       help='webcam ID number',
                       default=-1, type=int)
@@ -109,8 +124,8 @@ def _get_image_blob(im):
   Arguments:
     im (ndarray): a color image in BGR order
   Returns:
-    blob (ndarray): a data blob holding an image pyramid
-    im_scale_factors (list): list of image scales (relative to im) used
+    blob (ndarray): a data blob holding an image pyramid,将图片金字塔存放在blob中
+    im_scale_factors (list): list of image scales (relative to im) used,图片尺度列表
       in the image pyramid
   """
   im_orig = im.astype(np.float32, copy=True)
